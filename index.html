@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>黎深0905应援汇总地图</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #f0f4f8 0%, #e6e6ff 100%);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(90deg, #6fa8dc 0%, #3a7bd5 100%);
+      color: white;
+      padding: 12px 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 22px;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+    }
+    .stats-bar {
+      display: flex;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 4px 12px;
+    }
+    .stat-item {
+      display: flex;
+      align-items: center;
+      margin: 0 10px;
+      font-size: 13px;
+    }
+    .stat-icon {
+      margin-right: 4px;
+      font-size: 14px;
+    }
+    #wrap {
+      display: flex;
+      height: calc(100vh - 56px);
+      position: relative;
+    }
+    #map {
+      flex: 1;
+      position: relative;
+    }
+    #panel {
+      width: 300px;
+      border-left: 1px solid #d1d9e6;
+      padding: 12px;
+      box-sizing: border-box;
+      background: rgba(255, 255, 255, 0.95);
+      overflow: auto;
+      box-shadow: -2px 0 10px rgba(0, 0, 0, 0.08);
+      z-index: 1;
+    }
+    .poi {
+      padding: 8px;
+      border-bottom: 1px solid #eaeef2;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .poi:hover {
+      background-color: #f7f9fc;
+      transform: translateX(3px);
+    }
+    .poi.highlighted {
+      background-color: #edf2ff;
+      border-left: 3px solid #4a6fa5;
+    }
+    .hint {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      border: 1px solid #d1d9e6;
+    }
+    #loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.9);
+      padding: 16px;
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      border: 1px solid #d1d9e6;
+    }
+    #infoWindow {
+      position: absolute;
+      top: 20px;
+      right: 320px;
+      width: 280px;
+      background: white;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      padding: 14px;
+      z-index: 1000;
+      display: none;
+      border: 1px solid #d1d9e6;
+    }
+    #infoWindow h3 {
+      margin-top: 0;
+      color: #4a6fa5;
+      border-bottom: 1px solid #eaeef2;
+      padding-bottom: 6px;
+      font-size: 16px;
+    }
+    #infoWindow .close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      color: #a0aec0;
+    }
+    #infoWindow .close:hover {
+      color: #4a6fa5;
+    }
+    #infoWindow .info-item {
+      margin: 6px 0;
+      font-size: 13px;
+    }
+    #infoWindow .info-label {
+      font-weight: bold;
+      color: #4a6fa5;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 2px 5px;
+      border-radius: 3px;
+      color: white;
+      font-size: 11px;
+      margin-left: 6px;
+    }
+    .overseas-panel {
+      position: absolute;
+      bottom: 50px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 6px;
+      padding: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      z-index: 1000;
+      width: 180px;
+      border: 1px solid #d1d9e6;
+      transition: all 0.3s ease;
+    }
+    .overseas-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      margin-bottom: 5px;
+    }
+    .overseas-panel h4 {
+      margin: 0;
+      color: #4a6fa5;
+      font-size: 13px;
+    }
+    .overseas-list {
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 11px;
+    }
+    .overseas-item {
+      padding: 4px 0;
+      border-bottom: 1px solid #f1f5f9;
+      line-height: 1.3;
+    }
+    .overseas-item:last-child {
+      border-bottom: none;
+    }
+    .toggle-icon {
+      font-size: 12px;
+      color: #a0aec0;
+    }
+    .overseas-panel.collapsed {
+      width: 140px;
+    }
+    .overseas-panel.collapsed .overseas-list {
+      display: none;
+    }
+    .map-controls {
+      position: absolute;
+      top: 10px;
+      right: 320px;
+      z-index: 1000;
+    }
+    .map-btn {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #d1d9e6;
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      margin-left: 5px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .map-btn:hover {
+      background: #f7f9fc;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>黎深0905应援汇总</h1>
+    <div class="stats-bar">
+      <div class="stat-item">
+        <span class="stat-icon">📊</span>
+        <span id="totalScreens">大屏数: 0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-icon">🏢</span>
+        <span id="tonglouCount">痛楼数: 0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-icon">🛍️</span>
+        <span id="mallCount">商场数: 0</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="wrap">
+    <div id="map" style="width:100%;height:100%;"></div>
+    <div id="panel">
+      <h3>筛选</h3>
+      <div>
+        <label>选择日期: <input type="date" id="datePicker" /></label>
+      </div>
+      <h4 style="margin-top:12px;">视窗内 POI <span id="poiCount"></span></h4>
+      <div id="list"></div>
+    </div>
+    <div id="hint" class="hint" style="display: none;">双击地图返回全国视图</div>
+    <div id="loading">正在加载数据...</div>
+    <div id="infoWindow">
+      <span class="close">&times;</span>
+      <h3 id="infoTitle"></h3>
+      <div class="info-item"><span class="info-label">省份:</span> <span id="infoProvince"></span></div>
+      <div class="info-item"><span class="info-label">城市:</span> <span id="infoCity"></span></div>
+      <div class="info-item"><span class="info-label">日期:</span> <span id="infoDate"></span></div>
+      <div class="info-item"><span class="info-label">时间:</span> <span id="infoTime"></span></div>
+      <div class="info-item"><span class="info-label">屏幕数:</span> <span id="infoScreens"></span></div>
+      <div class="info-item"><span class="info-label">负责人:</span> <span id="infoOwner"></span></div>
+      <div class="info-item"><span class="info-label">状态:</span> <span id="infoStatus"></span></div>
+      <div class="info-item"><span class="info-label">备注:</span> <span id="infoInfo"></span></div>
+    </div>
+    <div id="overseasPanel" class="overseas-panel">
+      <div class="overseas-header" onclick="toggleOverseasPanel()">
+        <h4>海外应援点 <span id="overseasCount">(0)</span></h4>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div id="overseasList" class="overseas-list"></div>
+    </div>
+    <div class="map-controls">
+      <button class="map-btn" onclick="resetMapView()">重置视图</button>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+
+  <script>
+  let allData = [];
+  let highlightedPoi = null;
+  let statsInterval = null;
+  let overseasData = [];
+  let isOverseasPanelCollapsed = false;
+
+  const statusColor = {
+    "已解锁": "#28a745",
+    "无任务": "#6c757d",
+    "痛楼": "#dc3545",
+    "沟通中": "#ff7f11"
+  };
+
+  // 状态排序优先级
+  const statusPriority = {
+    "痛楼": 1,
+    "沟通中": 2,
+    "已解锁": 3,
+    "无任务": 4
+  };
+
+  // 中国省份列表（用于识别海外点）
+  const chinaProvinces = [
+    "北京", "天津", "上海", "重庆", "河北", "山西", "辽宁", "吉林", "黑龙江",
+    "江苏", "浙江", "安徽", "福建", "江西", "山东", "河南", "湖北", "湖南",
+    "广东", "海南", "四川", "贵州", "云南", "陕西", "甘肃", "青海", "台湾",
+    "内蒙古", "广西", "西藏", "宁夏", "新疆", "香港", "澳门"
+  ];
+
+  const chart = echarts.init(document.getElementById('map'));
+  const hint = document.getElementById('hint');
+  const loading = document.getElementById('loading');
+  const infoWindow = document.getElementById('infoWindow');
+  const poiCount = document.getElementById('poiCount');
+  const totalScreens = document.getElementById('totalScreens');
+  const tonglouCount = document.getElementById('tonglouCount');
+  const mallCount = document.getElementById('mallCount');
+  const overseasPanel = document.getElementById('overseasPanel');
+  const overseasCount = document.getElementById('overseasCount');
+  const overseasList = document.getElementById('overseasList');
+
+  const loadedMaps = new Set(['china']);
+  let currentMap = 'china';
+  let currentProvince = '';
+
+  // 切换海外点面板的展开/收起状态
+  function toggleOverseasPanel() {
+    isOverseasPanelCollapsed = !isOverseasPanelCollapsed;
+    if (isOverseasPanelCollapsed) {
+      overseasPanel.classList.add('collapsed');
+      overseasPanel.querySelector('.toggle-icon').textContent = '►';
+    } else {
+      overseasPanel.classList.remove('collapsed');
+      overseasPanel.querySelector('.toggle-icon').textContent = '▼';
+    }
+  }
+
+  // 重置地图视图
+  function resetMapView() {
+    chart.setOption({
+      geo: {
+        map: 'china',
+        center: undefined,
+        zoom: 1.8
+      }
+    });
+    currentMap = 'china';
+    currentProvince = '';
+    updateMap(document.getElementById('datePicker').value);
+  }
+
+  // 设置默认日期为今天
+  function setDefaultDate() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    let mm = today.getMonth() + 1;
+    let dd = today.getDate();
+
+    if (mm < 10) mm = '0' + mm;
+    if (dd < 10) dd = '0' + dd;
+
+    const formattedToday = `${yyyy}-${mm}-${dd}`;
+    document.getElementById('datePicker').value = formattedToday;
+
+    return formattedToday;
+  }
+
+  // 更新统计数据
+  function updateStats() {
+    // 计算总屏幕数
+    const total = allData.reduce((sum, item) => sum + (item.count || 1), 0);
+    totalScreens.textContent = `大屏数: ${total}`;
+
+    // 计算痛楼数
+    const tonglou = allData.filter(item => item.status === "痛楼").length;
+    tonglouCount.textContent = `痛楼数: ${tonglou}`;
+
+    // 计算商场数（假设所有点都是商场）
+    mallCount.textContent = `商场数: ${allData.length}`;
+
+    // 更新海外点计数
+    overseasCount.textContent = `(${overseasData.length})`;
+  }
+
+  // 显示海外点面板
+  function updateOverseasPanel() {
+    if (overseasData.length > 0) {
+      overseasPanel.style.display = 'block';
+      overseasList.innerHTML = '';
+
+      overseasData.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'overseas-item';
+        div.innerHTML = `
+          <strong>${item.poi}</strong><br>
+          <span>${item.province} · ${item.city}</span>
+        `;
+        overseasList.appendChild(div);
+      });
+    } else {
+      overseasPanel.style.display = 'none';
+    }
+  }
+
+  // 滚动显示统计数据
+  function startStatsAnimation() {
+    if (statsInterval) clearInterval(statsInterval);
+
+    const stats = [
+      {id: 'totalScreens', label: '大屏数'},
+      {id: 'tonglouCount', label: '痛楼数'},
+      {id: 'mallCount', label: '商场数'}
+    ];
+
+    let currentStat = 0;
+
+    statsInterval = setInterval(() => {
+      const stat = stats[currentStat];
+      const element = document.getElementById(stat.id);
+
+      // 添加高亮动画
+      element.style.transition = 'all 0.3s ease';
+      element.style.color = '#ffffff';
+      element.style.textShadow = '0 0 5px rgba(255, 255, 255, 0.8)';
+
+      setTimeout(() => {
+        element.style.color = '';
+        element.style.textShadow = '';
+      }, 500);
+
+      currentStat = (currentStat + 1) % stats.length;
+    }, 2000);
+  }
+
+  function loadDataFromWindow() {
+    try {
+      if (!window.data) throw new Error('data.js 未定义 window.data');
+
+      // 分离国内和海外数据
+      const domesticData = [];
+      overseasData = [];
+
+      window.data.forEach(item => {
+        const isOverseas = !chinaProvinces.includes(item.province);
+        const processedItem = {
+          province: item.province,
+          city: item.city,
+          poi: item.name,
+          date_raw: item.date,
+          date_list: item.date_list || [],
+          time: item.time || [],
+          count: item.screens ? parseInt(String(item.screens).replace(/\s+/g,'')) || 1 : 1,
+          tag: item.owner,
+          status: item.status,
+          info: item.info,
+          lat: item.y,
+          lng: item.x,
+          isOverseas: isOverseas
+        };
+
+        if (isOverseas) {
+          overseasData.push(processedItem);
+        } else {
+          domesticData.push(processedItem);
+        }
+      });
+
+      allData = domesticData;
+
+      loading.style.display = 'none';
+      initMap();
+
+      // 设置默认日期并更新地图
+      const defaultDate = setDefaultDate();
+      updateMap(defaultDate);
+
+      // 更新统计数据
+      updateStats();
+
+      // 更新海外点面板
+      updateOverseasPanel();
+
+      // 启动统计数字动画
+      startStatsAnimation();
+    } catch (err) {
+      console.error('加载数据失败:', err);
+      loading.textContent = '数据加载失败: ' + (err.message || err);
+    }
+  }
+
+  // 判断点是否在多边形内
+  function isPointInPolygon(point, polygon) {
+    const x = point[0], y = point[1];
+    let inside = false;
+
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const xi = polygon[i][0], yi = polygon[i][1];
+      const xj = polygon[j][0], yj = polygon[j][1];
+
+      const intersect = ((yi > y) !== (yj > y)) &&
+        (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+
+      if (intersect) inside = !inside;
+    }
+
+    return inside;
+  }
+
+  // 获取省份的边界坐标
+  function getProvinceBounds(geoJson, provinceName) {
+    const province = geoJson.features.find(f => f.properties.name === provinceName);
+    if (!province) return null;
+
+    // 提取省份的所有边界坐标点
+    const bounds = [];
+    if (province.geometry.type === 'Polygon') {
+      bounds.push(...province.geometry.coordinates[0]);
+    } else if (province.geometry.type === 'MultiPolygon') {
+      province.geometry.coordinates.forEach(polygon => {
+        bounds.push(...polygon[0]);
+      });
+    }
+
+    return bounds;
+  }
+
+  // 筛选属于当前省份的POI
+  function filterByProvince(data, provinceName, geoJson) {
+    if (provinceName === '全国' || !provinceName) return data;
+
+    const bounds = getProvinceBounds(geoJson, provinceName);
+    if (!bounds) return data.filter(item => item.province === provinceName);
+
+    return data.filter(item => {
+      // 首先检查省份名称是否匹配
+      if (item.province === provinceName) return true;
+
+      // 如果省份名称不匹配，但坐标在省份边界内，也包含
+      const point = [item.lng, item.lat];
+      return isPointInPolygon(point, bounds);
+    });
+  }
+
+  // 显示信息窗口
+  function showInfoWindow(poiData) {
+    document.getElementById('infoTitle').textContent = poiData.poi;
+    document.getElementById('infoProvince').textContent = poiData.province;
+    document.getElementById('infoCity').textContent = poiData.city;
+    document.getElementById('infoDate').textContent = poiData.date_raw;
+    document.getElementById('infoTime').textContent = poiData.time && poiData.time.length > 0 ? poiData.time[0] : '未知';
+    document.getElementById('infoScreens').textContent = poiData.count;
+    document.getElementById('infoOwner').textContent = poiData.tag;
+
+    const statusElement = document.getElementById('infoStatus');
+    statusElement.textContent = poiData.status;
+    statusElement.className = 'status-badge';
+    statusElement.style.backgroundColor = statusColor[poiData.status] || '#6c757d';
+
+    document.getElementById('infoInfo').textContent = poiData.info || '无备注';
+
+    infoWindow.style.display = 'block';
+  }
+
+  // 关闭信息窗口
+  function closeInfoWindow() {
+    infoWindow.style.display = 'none';
+    if (highlightedPoi) {
+      highlightedPoi.classList.remove('highlighted');
+      highlightedPoi = null;
+    }
+  }
+
+  function initMap() {
+    fetch('./100000_full.json')
+      .then(r => r.json())
+      .then(geoJson => {
+        geoJson.features.forEach(f => {
+          if (f.properties.name.includes("特别行政区")) f.properties.name = f.properties.name.replace("特别行政区", "");
+        });
+        geoJson.features.forEach(f => {
+          if (f.properties.name === "河北省") {
+            f.geometry.coordinates = f.geometry.coordinates.map(poly => poly.map(ring => ring.map(coord => [coord[0], coord[1]-0.8])));
+          }
+        });
+
+        echarts.registerMap('china', geoJson);
+
+        const option = {
+          backgroundColor: 'rgba(240, 244, 248, 0.6)',
+          tooltip: {
+            trigger: 'item',
+            formatter: function(params) {
+              if (!params.data) return '';
+              return `${params.data.name}<br>${params.data.city}<br>${params.data.date_raw}`;
+            }
+          },
+          geo: {
+            map: 'china',
+            roam: true,
+            zoom: 1.8,
+            center: [105, 36],
+            label: {
+              show: true,
+              emphasis: { show: true },
+              color: '#4a6fa5'
+            },
+            itemStyle: {
+              areaColor: 'rgba(200, 210, 230, 0.6)',
+              borderColor: '#8fa6d3',
+              borderWidth: 1,
+              emphasis: {
+                areaColor: 'rgba(140, 160, 210, 0.8)',
+                borderWidth: 1.5
+              }
+            },
+            scaleLimit: { min: 1, max: 20 }
+          },
+          series: [{
+            name: 'poi',
+            type: 'scatter',
+            coordinateSystem: 'geo',
+            symbolSize: function(val) {
+              return Math.max(10, Math.min(20, val[2]*5));
+            },
+            data: [],
+            encode: { tooltip: [0] },
+            itemStyle: {
+              color: function(params) {
+                return statusColor[params.data.status] || '#4a6fa5';
+              },
+              borderColor: '#fff',
+              borderWidth: 1,
+              opacity: 0.9
+            },
+            emphasis: {
+              itemStyle: {
+                borderWidth: 2,
+                opacity: 1,
+                shadowBlur: 8,
+                shadowColor: 'rgba(0, 0, 0, 0.3)'
+              }
+            }
+          }]
+        };
+
+        chart.setOption(option);
+
+        chart.on('dblclick', function(params) {
+          if (currentMap === 'china' && params.componentType === 'geo' && params.name) {
+            const provinceName = params.name;
+            currentProvince = provinceName;
+            const provinceFeature = geoJson.features.find(f=>f.properties.name===provinceName);
+            if(provinceFeature){
+              const adcode = provinceFeature.properties.adcode;
+              fetch(`./code/${adcode}_full.json`)
+                .then(r=>r.json())
+                .then(cityGeoJson=>{
+                  const mapName=`city_${adcode}`;
+                  echarts.registerMap(mapName, cityGeoJson);
+                  loadedMaps.add(mapName);
+                  chart.setOption({geo:{map:mapName, center:undefined, zoom:1}});
+                  currentMap=mapName;
+
+                  // 更新地图显示，只显示当前省份的POI
+                  updateMap(document.getElementById('datePicker').value);
+
+                  hint.style.display='block';
+                  hint.textContent=`双击地图返回全国视图 (当前: ${provinceName})`;
+                  setTimeout(()=>{hint.style.display='none';},5000);
+                }).catch(err=>console.error('加载市级地图失败:',err));
+            }
+          } else if(currentMap!=='china') {
+            resetMapView();
+            hint.style.display='block';
+            hint.textContent='双击省份进入市级视图';
+            setTimeout(()=>{hint.style.display='none';},5000);
+          }
+        });
+
+        // 点击POI点显示信息窗口
+        chart.on('click', function(params) {
+          if (params.data) {
+            const poiData = allData.find(item =>
+              item.poi === params.data.name &&
+              item.lng === params.data.value[0] &&
+              item.lat === params.data.value[1]
+            );
+
+            if (poiData) {
+              showInfoWindow(poiData);
+
+              // 高亮显示对应的列表项
+              const listItems = document.querySelectorAll('.poi');
+              listItems.forEach(item => {
+                item.classList.remove('highlighted');
+                if (item.textContent.includes(poiData.poi)) {
+                  item.classList.add('highlighted');
+                  highlightedPoi = item;
+                  item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+              });
+            }
+          }
+        });
+
+        hint.style.display='block';
+        hint.textContent='双击省份进入市级视图';
+        setTimeout(()=>{hint.style.display='none';},5000);
+
+        // 存储geoJson供后续使用
+        window.chinaGeoJson = geoJson;
+      }).catch(err=>{
+        console.error('加载地图失败', err);
+        loading.textContent='地图加载失败: '+err.message;
+      });
+
+    // 关闭按钮事件
+    document.querySelector('.close').addEventListener('click', closeInfoWindow);
+
+    // 点击地图其他区域关闭信息窗口
+    chart.getDom().addEventListener('click', function(e) {
+      if (e.target === chart.getDom()) {
+        closeInfoWindow();
+      }
+    });
+  }
+
+  function isVisible(p, selectedDate){
+    if(!selectedDate) return true;
+    if(p.date_list && p.date_list.length>0) return p.date_list.includes(selectedDate);
+    if(!p.date_raw) return true;
+    const year = (new Date()).getFullYear();
+    const raw = p.date_raw.replace(/[（）\(\)].*$/,'').replace(/～/g,'-').replace(/—/g,'-').replace(/\s+/g,'');
+    const parts = raw.split('-').map(s=>s.trim()).filter(Boolean);
+    function norm(s){
+      const m = s.split('.');
+      if(m.length===2){ const mm=m[0].padStart(2,'0'), dd=m[1].padStart(2,'0'); return `${year}-${mm}-${dd}`; }
+      return null;
+    }
+    let start,end;
+    if(parts.length===1){ start=norm(parts[0]); end=norm(parts[0]); } else { start=norm(parts[0]); end=norm(parts[1]); }
+    if(!start||!end) return true;
+    const d=new Date(selectedDate), s=new Date(start), e=new Date(end);
+    return s<=d&&d<=e;
+  }
+
+  function updateMap(selectedDate){
+    selectedDate = selectedDate || document.getElementById('datePicker').value;
+    let visible = allData.filter(p=>isVisible(p, selectedDate));
+
+    // 如果当前是省级地图，只显示当前省份的POI
+    if (currentMap !== 'china' && currentProvince) {
+      visible = filterByProvince(visible, currentProvince, window.chinaGeoJson);
+    }
+
+    const seriesData = visible.map(p=>({
+      name: p.poi,
+      value: [p.lng, p.lat, p.count || 1],
+      status: p.status,
+      city: p.city,
+      date_raw: p.date_raw,
+      screens: p.count,
+      province: p.province
+    }));
+
+    chart.setOption({
+      series: [{
+        data: seriesData,
+        symbolSize: function(val){ return Math.max(10, Math.min(20, val[2]*5)); },
+        itemStyle: {
+          color: function(params) {
+            return statusColor[params.data.status] || '#4a6fa5';
+          }
+        }
+      }]
+    });
+
+    renderList(visible);
+  }
+
+  function renderList(list){
+    const c=document.getElementById('list');
+    c.innerHTML='';
+
+    // 更新POI计数
+    poiCount.textContent = `(${list.length}个)`;
+
+    if(list.length===0){
+      c.innerHTML='<div class="poi">没有匹配的POI</div>';
+      return;
+    }
+
+    // 排序：痛楼优先，然后按状态优先级排序，最后按名称排序
+    list.sort((a, b) => {
+      // 按状态优先级排序
+      const statusOrder = statusPriority[a.status] - statusPriority[b.status];
+      if (statusOrder !== 0) return statusOrder;
+
+      // 状态相同按名称排序
+      return a.poi.localeCompare(b.poi);
+    });
+
+    list.forEach(p=>{
+      const el=document.createElement('div');
+      el.className='poi';
+
+      el.innerHTML=`
+        <strong>${p.poi}</strong>
+        <span class="status-badge" style="background-color: ${statusColor[p.status] || '#6c757d'}">${p.status}</span>
+        <div style="font-size:12px;color:#666">${p.city} · ${p.date_raw}</div>
+      `;
+      el.onclick=()=>{
+        // 定位到POI
+        chart.setOption({geo:{center:[p.lng,p.lat], zoom:8}});
+
+        // 显示信息窗口
+        const poiData = allData.find(item =>
+          item.poi === p.poi &&
+          item.lng === p.lng &&
+          item.lat === p.lat
+        );
+
+        if (poiData) {
+          showInfoWindow(poiData);
+
+          // 高亮当前项
+          document.querySelectorAll('.poi').forEach(item => item.classList.remove('highlighted'));
+          el.classList.add('highlighted');
+          highlightedPoi = el;
+        }
+      };
+      c.appendChild(el);
+    });
+  }
+
+  document.getElementById('datePicker').addEventListener('change', function() {
+    updateMap(this.value);
+  });
+
+  window.addEventListener('load', loadDataFromWindow);
+  </script>
+</body>
+</html>
