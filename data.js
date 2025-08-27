@@ -1010,7 +1010,7 @@ window.data = [
 {"province": "菲律宾", "city": "马尼拉", "name": "GA TOWER大屏", "date": "9.5", "date_list": ["2025-09-05"], "time": [""], "screens": "", "owner": "黎深0905生贺组", "status": "钞能力", "info": "", "x": 114.00768, "y": 22.808959},
 {"province": "泰国", "city": "曼谷", "name": "暹罗步行街", "date": "9.5", "date_list": ["2025-09-05"], "time": [""], "screens": "20", "owner": "黎深0905生贺组", "status": "钞能力", "info": "", "x": 106.530999, "y": 29.579751},
 {"province": "印度尼西亚", "city": "雅加达", "name": "雅加达三站地铁电子屏", "date": "9.5", "date_list": ["2025-09-05"], "time": [""], "screens": "", "owner": "黎深0905生贺组", "status": "钞能力", "info": "", "x": 112.206556, "y": 30.330703},
-{"province": "日本", "city": "东京", "name": "涩谷宇田川町24-6", "date": "9.5", "date_list": ["2025-09-05"], "time": [""], "screens": "", "owner": "联合应援", "status": "钞能力", "info": "", "x": 114.36367, "y": 38.055479}
+{"province": "日本", "city": "东京", "name": "涩谷宇田川町24-6", "date": "9.5", "date_list": ["2025-09-05"], "time": [""], "screens": "", "owner": "联合应援", "status": "钞能力", "info": "", "x": 114.36367, "y": 38.055479},
 {"province": "江苏", "city": "南京", "name": "南京城北万象汇", "date": "8.29-9.7", "date_list": ["2025-08-29", "2025-08-30", "2025-08-31", "2025-09-01", "2025-09-02", "2025-09-03", "2025-09-04", "2025-09-05", "2025-09-06", "2025-09-07"], "time": [""], "owner": "黎深0905生贺组", "status": "痛楼", "link": "http://xhslink.com/n/5GRosldWqVl ", "x": 118.83306, "y": 32.120075},
 {"province": "江苏", "city": "南京", "name": "南京鼓楼吾悦", "date": "8.29-8.31", "date_list": ["2025-08-29", "2025-08-30", "2025-08-31"], "time": [""], "owner": "雪归归", "status": "痛楼", "link": "http://xhslink.com/n/tAtQt2Uxdk", "x": 118.776898, "y": 32.068815},
 {"province": "江苏", "city": "扬州", "name": "扬州万象汇", "date": "8.27-9.7", "date_list": ["2025-08-27", "2025-08-28", "2025-08-29", "2025-08-30", "2025-08-31", "2025-09-01", "2025-09-02", "2025-09-03", "2025-09-04", "2025-09-05", "2025-09-06", "2025-09-07"], "time": [""], "owner": "黎深0905生贺组", "status": "痛楼", "link": "http://xhslink.com/n/8OXe7zC9x0O", "x": 119.425848, "y": 32.395034},
@@ -1113,4 +1113,4 @@ window.data = [
 {"province": "印度尼西亚", "city": "卡萨尔", "name": "Center Point of indonesia in Makkassar", "date": "待定", "date_list": ["待定"], "time": [""], "screens": "", "owner": "", "status": "", "info": ""},
 {"province": "印度尼西亚", "city": "雅加达", "name": "Graha Mandiri in Jakarta", "date": "待定", "date_list": ["待定"], "time": [""], "screens": "", "owner": "", "status": "", "info": ""},
 {"province": "日本", "city": "东京", "name": "新宿区3-23-18 JR 新宿站东口", "date": "9.1-9.7", "date_list": ["2025-09-01", "2025-09-02", "2025-09-03", "2025-09-04", "2025-09-05", "2025-09-06", "2025-09-07"], "time": [""], "screens": "", "owner": "茉月绫，甜甜圈厨，Dita然已", "status": "钞能力", "info": ""},
- ]
+]
