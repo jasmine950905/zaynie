@@ -680,11 +680,7 @@
             name: 'poi',
             type: 'scatter',
             coordinateSystem: 'geo',
-            symbolSize: function(val,params) {
-              const item = params.data;
-              if (item.type === "痛楼" || item.type === "特殊应援") {
-                return 12;  
-              }
+            symbolSize: function(val) { 
               return Math.max(10, Math.min(20, val[2]*5));
             },
             data: [],
