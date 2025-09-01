@@ -165,6 +165,7 @@
       align-items: center;
       cursor: pointer;
       margin-bottom: 5px;
+      font-size: 13px;
     }
     .overseas-panel h4 {
       margin: 0;
@@ -213,6 +214,19 @@
     .map-btn:hover {
       background: #f7f9fc;
     }
+    .link-button {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 8px;
+      background-color: #4a6fa5;
+      color: white;
+      text-decoration: none;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+    .link-button:hover {
+      background-color: #3a7bd5;
+    }
   </style>
 </head>
 <body>
@@ -230,6 +244,10 @@
       <div class="stat-item">
         <span class="stat-icon">🛍️</span>
         <span id="mallCount">商场数: 0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-icon">🎁</span>
+        <span id="specialCount">特殊应援: 0</span>
       </div>
     </div>
   </div>
@@ -256,7 +274,11 @@
       <div class="info-item"><span class="info-label">屏幕数:</span> <span id="infoScreens"></span></div>
       <div class="info-item"><span class="info-label">负责人:</span> <span id="infoOwner"></span></div>
       <div class="info-item"><span class="info-label">状态:</span> <span id="infoStatus"></span></div>
+      <div class="info-item"><span class="info-label">类型:</span> <span id="infoType"></span></div>
       <div class="info-item"><span class="info-label">备注:</span> <span id="infoInfo"></span></div>
+      <div id="infoLinkContainer" style="display: none;">
+        <a id="infoLink" class="link-button" href="#" target="_blank">查看详情</a>
+      </div>
     </div>
     <div id="overseasPanel" class="overseas-panel">
       <div class="overseas-header" onclick="toggleOverseasPanel()">
@@ -279,19 +301,26 @@
   let overseasData = [];
   let isOverseasPanelCollapsed = false;
 
+  // 状态和类型颜色映射
   const statusColor = {
     "已解锁": "#28a745",
     "无任务": "#6c757d",
-    "痛楼": "#dc3545",
     "沟通中": "#ff7f11"
   };
 
-  // 状态排序优先级
+  const typeColor = {
+    "痛楼": "#dc3545",
+    "特殊应援": "#9c27b0",
+    "": "#4a6fa5" // 默认颜色
+  };
+
+  // 状态和类型排序优先级
   const statusPriority = {
     "痛楼": 1,
-    "沟通中": 2,
-    "已解锁": 3,
-    "无任务": 4
+    "特殊应援": 2,
+    "沟通中": 3,
+    "已解锁": 4,
+    "无任务": 5
   };
 
   // 中国省份列表（用于识别海外点）
@@ -310,9 +339,12 @@
   const totalScreens = document.getElementById('totalScreens');
   const tonglouCount = document.getElementById('tonglouCount');
   const mallCount = document.getElementById('mallCount');
+  const specialCount = document.getElementById('specialCount');
   const overseasPanel = document.getElementById('overseasPanel');
   const overseasCount = document.getElementById('overseasCount');
   const overseasList = document.getElementById('overseasList');
+  const infoLinkContainer = document.getElementById('infoLinkContainer');
+  const infoLink = document.getElementById('infoLink');
 
   const loadedMaps = new Set(['china']);
   let currentMap = 'china';
@@ -367,8 +399,12 @@
     totalScreens.textContent = `大屏数: ${total}`;
 
     // 计算痛楼数
-    const tonglou = allData.filter(item => item.status === "痛楼").length;
+    const tonglou = allData.filter(item => item.type === "痛楼").length;
     tonglouCount.textContent = `痛楼数: ${tonglou}`;
+
+    // 计算特殊应援数
+    const special = allData.filter(item => item.type === "特殊应援").length;
+    specialCount.textContent = `特殊应援: ${special}`;
 
     // 计算商场数（假设所有点都是商场）
     mallCount.textContent = `商场数: ${allData.length}`;
@@ -404,6 +440,7 @@
     const stats = [
       {id: 'totalScreens', label: '大屏数'},
       {id: 'tonglouCount', label: '痛楼数'},
+      {id: 'specialCount', label: '特殊应援'},
       {id: 'mallCount', label: '商场数'}
     ];
 
@@ -447,7 +484,9 @@
           count: item.screens ? parseInt(String(item.screens).replace(/\s+/g,'')) || 1 : 1,
           tag: item.owner,
           status: item.status,
-          info: item.info,
+          type: item.type || "",
+          info: item.info || "",
+          link: item.link || "",
           lat: item.y,
           lng: item.x,
           isOverseas: isOverseas
@@ -536,6 +575,20 @@
     });
   }
 
+  // 获取POI点的颜色
+  function getPoiColor(item) {
+    // 优先使用type字段确定颜色
+    if (item.type && typeColor[item.type]) {
+      return typeColor[item.type];
+    }
+    // 其次使用status字段确定颜色
+    if (item.status && statusColor[item.status]) {
+      return statusColor[item.status];
+    }
+    // 默认颜色
+    return typeColor[""];
+  }
+
   // 显示信息窗口
   function showInfoWindow(poiData) {
     document.getElementById('infoTitle').textContent = poiData.poi;
@@ -545,14 +598,27 @@
     document.getElementById('infoTime').textContent = poiData.time && poiData.time.length > 0 ? poiData.time[0] : '未知';
     document.getElementById('infoScreens').textContent = poiData.count;
     document.getElementById('infoOwner').textContent = poiData.tag;
-
+    
     const statusElement = document.getElementById('infoStatus');
     statusElement.textContent = poiData.status;
     statusElement.className = 'status-badge';
     statusElement.style.backgroundColor = statusColor[poiData.status] || '#6c757d';
-
+    
+    const typeElement = document.getElementById('infoType');
+    typeElement.textContent = poiData.type || "普通应援";
+    typeElement.className = 'status-badge';
+    typeElement.style.backgroundColor = getPoiColor(poiData);
+    
     document.getElementById('infoInfo').textContent = poiData.info || '无备注';
-
+    
+    // 处理链接
+    if (poiData.link) {
+      infoLink.href = poiData.link;
+      infoLinkContainer.style.display = 'block';
+    } else {
+      infoLinkContainer.style.display = 'none';
+    }
+    
     infoWindow.style.display = 'block';
   }
 
@@ -566,7 +632,7 @@
   }
 
   function initMap() {
-    fetch('./100000_full.json')
+    fetch('100000_full.json')
       .then(r => r.json())
       .then(geoJson => {
         geoJson.features.forEach(f => {
@@ -621,7 +687,7 @@
             encode: { tooltip: [0] },
             itemStyle: {
               color: function(params) {
-                return statusColor[params.data.status] || '#4a6fa5';
+                return getPoiColor(params.data);
               },
               borderColor: '#fff',
               borderWidth: 1,
@@ -647,7 +713,7 @@
             const provinceFeature = geoJson.features.find(f=>f.properties.name===provinceName);
             if(provinceFeature){
               const adcode = provinceFeature.properties.adcode;
-              fetch(`./code/${adcode}_full.json`)
+              fetch(`code/${adcode}_full.json`)
                 .then(r=>r.json())
                 .then(cityGeoJson=>{
                   const mapName=`city_${adcode}`;
@@ -752,6 +818,7 @@
       name: p.poi,
       value: [p.lng, p.lat, p.count || 1],
       status: p.status,
+      type: p.type,
       city: p.city,
       date_raw: p.date_raw,
       screens: p.count,
@@ -764,7 +831,7 @@
         symbolSize: function(val){ return Math.max(10, Math.min(20, val[2]*5)); },
         itemStyle: {
           color: function(params) {
-            return statusColor[params.data.status] || '#4a6fa5';
+            return getPoiColor(params.data);
           }
         }
       }]
@@ -787,8 +854,12 @@
 
     // 排序：痛楼优先，然后按状态优先级排序，最后按名称排序
     list.sort((a, b) => {
+      // 按类型优先级排序
+      const typeOrder = (statusPriority[a.type] || 99) - (statusPriority[b.type] || 99);
+      if (typeOrder !== 0) return typeOrder;
+      
       // 按状态优先级排序
-      const statusOrder = statusPriority[a.status] - statusPriority[b.status];
+      const statusOrder = (statusPriority[a.status] || 99) - (statusPriority[b.status] || 99);
       if (statusOrder !== 0) return statusOrder;
 
       // 状态相同按名称排序
@@ -801,7 +872,7 @@
 
       el.innerHTML=`
         <strong>${p.poi}</strong>
-        <span class="status-badge" style="background-color: ${statusColor[p.status] || '#6c757d'}">${p.status}</span>
+        <span class="status-badge" style="background-color: ${getPoiColor(p)}">${p.type || p.status}</span>
         <div style="font-size:12px;color:#666">${p.city} · ${p.date_raw}</div>
       `;
       el.onclick=()=>{
