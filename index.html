@@ -309,8 +309,8 @@
   };
 
   const typeColor = {
-    "痛楼": "#dc3545",
-    "特殊应援": "#9c27b0",
+    "痛楼": "#64b5f6",
+    "特殊应援": "#26a69a",
     "": "#4a6fa5" // 默认颜色
   };
 
@@ -318,9 +318,9 @@
   const statusPriority = {
     "痛楼": 1,
     "特殊应援": 2,
-    "沟通中": 3,
-    "已解锁": 4,
-    "无任务": 5
+    "已解锁": 3,
+    "无任务": 4,
+    "沟通中": 5
   };
 
   // 中国省份列表（用于识别海外点）
@@ -680,7 +680,11 @@
             name: 'poi',
             type: 'scatter',
             coordinateSystem: 'geo',
-            symbolSize: function(val) {
+            symbolSize: function(val,params) {
+              const item = params.data;
+              if (item.type === "痛楼" || item.type === "特殊应援") {
+                return 12;  
+              }
               return Math.max(10, Math.min(20, val[2]*5));
             },
             data: [],
